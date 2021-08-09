@@ -1,0 +1,14 @@
+stages:
+  - build
+
+build:
+  stage: build
+  script:
+    # Import variables
+    - 'source ./vars.sh'
+    # Build kernel
+    - './build_wsl_kernel.sh'
+    # Upload kernel image to GitLab Packages repo
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "/usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/linux-${KERNELNAME}/${KERNELVER}/bzImage"'
+    # Upload full build directory to GitLab Packages repo
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "/tmp/kbuild/linux-${KERNELVER}-${KERNELNAME}.tgz" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/linux-${KERNELNAME}/${KERNELVER}/linux-${KERNELVER}-${KERNELNAME}.tgz"'

@@ -4,9 +4,8 @@ set -xe
 # Root trap
 if [[ "$EUID" -ne 0 ]]; then echo "Please run as root"; exit; fi
 
-# Define the Linux Kernel and OpenZFS version we want to build here
-export KERNELVER=5.13.6
-export ZFSVER=2.1.0
+# Import variables
+source ./vars.sh
 
 # Install pre-requisites
 export DEBIAN_FRONTEND=noninteractive
@@ -41,22 +40,25 @@ apt-get install -y \
   wget \
   zlib1g-dev
 
-# Create build dir (delete it first if we find it already exists)
-if [[ -d "/opt/kbuild" ]]; then rm -rf /opt/kbuild; fi
-mkdir /opt/kbuild
+# Create temp build dir (delete it first if we find it already exists)
+if [[ -d "/tmp/kbuild" ]]; then rm -rf /tmp/kbuild; fi
+mkdir /tmp/kbuild
 
 # Download and extract the latest stable kernel source
-wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-${KERNELVER}.tar.xz -O /opt/kbuild/kernel.tar.xz
-tar -xf /opt/kbuild/kernel.tar.xz -C /opt/kbuild
+wget https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-${KERNELVER}.tar.xz -O /tmp/kbuild/kernel.tar.xz
+tar -xf /tmp/kbuild/kernel.tar.xz -C /tmp/kbuild
+
+# Move our kernel directory to reflect our custom name
+mv -fv /tmp/kbuild/linux-${KERNELVER} /usr/src/linux-${KERNELVER}-${KERNELNAME}
 
 # Add the WSL2 kernel config from upstream into our extracted kernel directory
-wget https://raw.githubusercontent.com/microsoft/WSL2-Linux-Kernel/master/Microsoft/config-wsl -O /opt/kbuild/linux-${KERNELVER}/.config
+wget https://raw.githubusercontent.com/microsoft/WSL2-Linux-Kernel/master/Microsoft/config-wsl -O /usr/src/linux-${KERNELVER}-${KERNELNAME}/.config
 
 # Use our custom localversion so we can tell when we've actually successfully installed one of our custom kernels
-sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-penguins-rule"/g' /opt/kbuild/linux-${KERNELVER}/.config
+sed -i 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION="-${KERNELNAME}"/g' /usr/src/linux-${KERNELVER}-${KERNELNAME}/.config
 
 # Enter the kernel directory
-cd /opt/kbuild/linux-${KERNELVER}
+cd /usr/src/linux-${KERNELVER}-${KERNELNAME}
 
 # Update our .config file by accepting the defaults for any new kernel
 # config options added to the kernel since the Microsoft config was
@@ -67,32 +69,32 @@ make olddefconfig
 make prepare
 
 # Download and extract the latest ZFS source
-wget https://github.com/openzfs/zfs/releases/download/zfs-${ZFSVER}/zfs-${ZFSVER}.tar.gz -O /opt/kbuild/zfs.tar.gz
-tar -xf /opt/kbuild/zfs.tar.gz -C /opt/kbuild
+wget https://github.com/openzfs/zfs/releases/download/zfs-${ZFSVER}/zfs-${ZFSVER}.tar.gz -O /tmp/kbuild/zfs.tar.gz
+tar -xf /tmp/kbuild/zfs.tar.gz -C /tmp/kbuild
 
 # Enter the ZFS module directory
-cd /opt/kbuild/zfs-${ZFSVER}
+cd /tmp/kbuild/zfs-${ZFSVER}
 
 # Run OpenZFS autogen.sh script
 ./autogen.sh
 
 # Configure the OpenZFS modules
 # See: https://openzfs.github.io/openzfs-docs/Developer%20Resources/opt/kbuilding%20ZFS.html
-./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=/opt/kbuild/linux-${KERNELVER} --with-linux-obj=/opt/kbuild/linux-${KERNELVER}
+./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=/usr/src/linux-${KERNELVER}-${KERNELNAME} --with-linux-obj=/usr/src/linux-${KERNELVER}-${KERNELNAME}
 
 # Run the copy-builtin script
-./copy-builtin /opt/kbuild/linux-${KERNELVER}
+./copy-builtin /usr/src/linux-${KERNELVER}-${KERNELNAME}
 
 # Build and install ZFS!
 make -s -j$(nproc)
 make install
 
 # Return to the kernel directory
-cd /opt/kbuild/linux-${KERNELVER}
+cd /usr/src/linux-${KERNELVER}-${KERNELNAME}
 
 # Make sure that we're going to build ZFS support when we build our kernel
-sed -i '/.*CONFIG_ZFS.*/d' /opt/kbuild/linux-${KERNELVER}/.config
-echo "CONFIG_ZFS=y" >> /opt/kbuild/linux-${KERNELVER}/.config
+sed -i '/.*CONFIG_ZFS.*/d' /usr/src/linux-${KERNELVER}-${KERNELNAME}/.config
+echo "CONFIG_ZFS=y" >> /usr/src/linux-${KERNELVER}-${KERNELNAME}/.config
 
 # Build our kernel and install the modules into /lib/modules!
 make -j$(nproc)
@@ -103,4 +105,8 @@ make modules_install
 # so after the build process is done, the user will need to shutdown WSL and then rename
 # the bzImage-new kernel to bzImage)
 mkdir -p /mnt/c/ZFSonWSL
-cp -fv /opt/kbuild/linux-${KERNELVER}/arch/x86/boot/bzImage /mnt/c/ZFSonWSL/bzImage-new
+cp -fv /usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage /mnt/c/ZFSonWSL/bzImage-new
+
+# Tar up the build directory
+# Mostly useful for our GitLab CI process but might help with redistribution
+tar -cvf /usr/src/linux-${KERNELVER}-${KERNELNAME} /tmp/kbuild/linux-${KERNELVER}-${KERNELNAME}.tgz
