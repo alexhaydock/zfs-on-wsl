@@ -6,6 +6,8 @@ stages:
 build:
   stage: build
   script:
+    # Make scripts executable
+    - 'chmod +x *.sh'
     # Import variables
     - 'source ./vars.sh'
     # Build kernel
