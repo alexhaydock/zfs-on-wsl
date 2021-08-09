@@ -74,10 +74,10 @@ wget https://github.com/openzfs/zfs/releases/download/zfs-${ZFSVER}/zfs-${ZFSVER
 tar -xf /tmp/kbuild/zfs.tar.gz -C /tmp/kbuild
 
 # Move our ZFS directory to reflect our custom name
-mv -fv /tmp/kbuild/zfs-${ZFSVER} /usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
+mv -fv /tmp/kbuild/zfs-${ZFSVER} /usr/src/zfs-${ZFSVER}-for-linux-${KERNELVER}-${KERNELNAME}
 
 # Enter the ZFS module directory
-cd /usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
+cd /usr/src/zfs-${ZFSVER}-for-linux-${KERNELVER}-${KERNELNAME}
 
 # Run OpenZFS autogen.sh script
 ./autogen.sh
@@ -115,4 +115,4 @@ cp -fv /usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage /mnt/c/ZF
 # Mostly useful for our GitLab CI process but might help with redistribution
 cd /tmp/kbuild
 tar -czf linux-${KERNELVER}-${KERNELNAME}.tgz /usr/src/linux-${KERNELVER}-${KERNELNAME}
-tar -czf zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}.tgz /usr/src//usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
+tar -czf zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}.tgz /usr/src/zfs-${ZFSVER}-for-linux-${KERNELVER}-${KERNELNAME}
