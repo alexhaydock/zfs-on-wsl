@@ -5,6 +5,7 @@ stages:
 
 build:
   stage: build
+  timeout: 3 hours
   script:
     # Make scripts executable
     - 'chmod +x *.sh'
