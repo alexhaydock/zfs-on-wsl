@@ -73,8 +73,11 @@ make prepare
 wget https://github.com/openzfs/zfs/releases/download/zfs-${ZFSVER}/zfs-${ZFSVER}.tar.gz -O /tmp/kbuild/zfs.tar.gz
 tar -xf /tmp/kbuild/zfs.tar.gz -C /tmp/kbuild
 
+# Move our ZFS directory to reflect our custom name
+mv -fv /tmp/kbuild/zfs-${ZFSVER} /usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
+
 # Enter the ZFS module directory
-cd /tmp/kbuild/zfs-${ZFSVER}
+cd /usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
 
 # Run OpenZFS autogen.sh script
 ./autogen.sh
@@ -86,7 +89,7 @@ cd /tmp/kbuild/zfs-${ZFSVER}
 # Run the copy-builtin script
 ./copy-builtin /usr/src/linux-${KERNELVER}-${KERNELNAME}
 
-# Build and install ZFS!
+# Build ZFS!
 make -s -j$(nproc)
 make install
 
@@ -108,7 +111,8 @@ make modules_install
 mkdir -p /mnt/c/ZFSonWSL
 cp -fv /usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage /mnt/c/ZFSonWSL/bzImage-new
 
-# Tar up the build directory
+# Tar up the build directories for the kernel and for ZFS
 # Mostly useful for our GitLab CI process but might help with redistribution
 cd /tmp/kbuild
 tar -czf linux-${KERNELVER}-${KERNELNAME}.tgz /usr/src/linux-${KERNELVER}-${KERNELNAME}
+tar -czf zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}.tgz /usr/src/zfs-${ZFSVER}
