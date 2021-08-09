@@ -109,4 +109,4 @@ cp -fv /usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage /mnt/c/ZF
 
 # Tar up the build directory
 # Mostly useful for our GitLab CI process but might help with redistribution
-tar -cvf /usr/src/linux-${KERNELVER}-${KERNELNAME} /tmp/kbuild/linux-${KERNELVER}-${KERNELNAME}.tgz
+tar -cfz /tmp/kbuild/linux-${KERNELVER}-${KERNELNAME}.tgz /usr/src/linux-${KERNELVER}-${KERNELNAME}
