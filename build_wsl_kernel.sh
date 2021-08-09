@@ -20,6 +20,7 @@ apt-get install -y \
   binutils \
   bison \
   build-essential \
+  curl \
   dkms \
   fakeroot \
   flex \
