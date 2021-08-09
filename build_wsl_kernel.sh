@@ -115,4 +115,4 @@ cp -fv /usr/src/linux-${KERNELVER}-${KERNELNAME}/arch/x86/boot/bzImage /mnt/c/ZF
 # Mostly useful for our GitLab CI process but might help with redistribution
 cd /tmp/kbuild
 tar -czf linux-${KERNELVER}-${KERNELNAME}.tgz /usr/src/linux-${KERNELVER}-${KERNELNAME}
-tar -czf zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}.tgz /usr/src/zfs-${ZFSVER}
+tar -czf zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}.tgz /usr/src//usr/src/zfs-${ZFSVER}-for-${KERNELVER}-${KERNELNAME}
