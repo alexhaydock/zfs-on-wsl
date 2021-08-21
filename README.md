@@ -6,6 +6,12 @@ This is a set of scripts and methods for building a WSL2 kernel and the correspo
 
 This does work, but it's quick and nasty so this is your obligatory warning not to rely on it for anything production-grade.
 
+There are two ways of working with the files in this repo -
+1. Self-building by running `./build_wsl_kernel.sh` directly inside of an Ubuntu WSL environment.
+2. Simply downloading [the pre-built files that GitLab CI generates](https://gitlab.com/alexhaydock/zfs-on-wsl/-/packages) from this repo.
+
+The instructions below are written with the assumption that you are downloading the files straight from this repo, but should be reasonably easy to follow without much modification if you are running the build script locally yourself.
+
 ### Installation Procedure
 Stop the WSL2 VM:
 ```bat
