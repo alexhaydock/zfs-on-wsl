@@ -3,6 +3,6 @@
 # Define the Linux Kernel OpenZFS version we want to build in
 # this file, as well as our custom kernel name.
 
-export KERNELVER="5.13.13"  # https://www.kernel.org/
-export ZFSVER="2.1.0"  # https://zfsonlinux.org/
+export KERNELVER="5.17.6"  # https://www.kernel.org/
+export ZFSVER="2.1.4"  # https://zfsonlinux.org/
 export KERNELNAME="penguins-rule"
