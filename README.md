@@ -1,4 +1,4 @@
-# ZFS-on-WSL
+# ZFS-on-WSL 🐧🪟
 
 ZFS? In my WSL? ... It's more likely than you think.
 
@@ -6,6 +6,8 @@ This is a set of scripts and methods intended to allow the use of ZFS on WSL2 by
 
 With the custom kernel built with this script, we can use a ZFS pool mounted inside WSL transparently from Windows as if it was part of the native filesystem:
 ![Screenshot of a pool accessible from Windows Explorer](cursed.png)
+
+<span style='color: red;'>**Disclaimer:** _This does work, but is intended mostly for fun and learning. Please don't use this for any data you actually care about!_</span>
 
 ### Why do we need this?
 By default, Ubuntu (the flagship WSL distro) ships the ZFS utilities inside the `zfsutils-linux` package. We can install this package inside WSL2 Ubuntu, but unfortunately it doesn't work. This is because although the package contains the _userspace_ ZFS utilities, it expects the kernel we're running to contain the OpenZFS kernel modules that provide the ZFS filesystem.
@@ -17,8 +19,8 @@ Unfortunately, WSL uses a monolithic kernel design. From what I can see, there's
 This repo is a quick and nasty script that automates:
 * Pulling Microsoft's latest WSL2 kernel code from their upstream
 * Pulling the latest OpenZFS code
-* Building the OpenZFS userspace modules against our kernel
-* Installing the OpenZFS userspace modules
+* Building the OpenZFS userspace utilities against our kernel
+* Installing the OpenZFS userspace utilities
 * Building the kernel, with ZFS as a statically built module, and support for USB Mass Storage Devices
 * Putting the kernel somewhere sensible on disk, for us to add it to our `.wslconfig`
 
@@ -96,7 +98,20 @@ Using the methods above, you can interact with mounted drives as you would any b
 ### Using ZFS
 Once you've got drives passed through as block devices, all the regular ZFS commands you're used to will work.
 
-You can use `zpool create` to create a pool, and the standard `zfs` commmands to manage datasets.
+Try creating a pool with:
+```sh
+sudo zpool create poolname /path/to/passed/through/disk
+```
+
+And then:
+```sh
+zpool status
+```
+
+or maybe:
+```sh
+zfs list
+```
 
 ### Known issues
 * For some reason, I can't build a ZFS pool out of sparse files. This is covered in [issue #1 in this repo](https://github.com/alexhaydock/zfs-on-wsl/issues/1). I'm not sure why this doesn't work. If you're looking to simply test whether ZFS is working after running this script, I recommend finding a USB drive you don't care much about and using the USB Mass Storage method above to do some testing.
