@@ -4,6 +4,9 @@ ZFS? In my WSL? ... It's more likely than you think.
 
 This is a set of scripts and methods intended to allow the use of ZFS on WSL2 by building a custom kernel along with the relevant userspace utilities.
 
+With the custom kernel built with this script, we can use a ZFS pool mounted inside WSL transparently from Windows as if it was part of the native filesystem:
+![Screenshot of a pool accessible from Windows Explorer](cursed.png)
+
 ### Why do we need this?
 By default, Ubuntu (the flagship WSL distro) ships the ZFS utilities inside the `zfsutils-linux` package. We can install this package inside WSL2 Ubuntu, but unfortunately it doesn't work. This is because although the package contains the _userspace_ ZFS utilities, it expects the kernel we're running to contain the OpenZFS kernel modules that provide the ZFS filesystem.
 
@@ -18,10 +21,6 @@ This repo is a quick and nasty script that automates:
 * Installing the OpenZFS userspace modules
 * Building the kernel, with ZFS as a statically built module, and support for USB Mass Storage Devices
 * Putting the kernel somewhere sensible on disk, for us to add it to our `.wslconfig`
-
-### What does this allow?
-Well it allows ZFS on Windows (kind of). Once a ZFS pool is mounted into the WSL2 VM, you can access it transparently from the host through the "Linux" pane in Windows Explorer:
-![Screenshot of a pool accessible from Windows Explorer](cursed.png)
 
 ### Build instructions
 Download this script into an Ubuntu instance running on WSL 2.
@@ -102,3 +101,4 @@ You can use `zpool create` to create a pool, and the standard `zfs` commmands to
 ### Known issues
 * For some reason, I can't build a ZFS pool out of sparse files. This is covered in [issue #1 in this repo](https://github.com/alexhaydock/zfs-on-wsl/issues/1). I'm not sure why this doesn't work. If you're looking to simply test whether ZFS is working after running this script, I recommend finding a USB drive you don't care much about and using the USB Mass Storage method above to do some testing.
 * At the moment, the script auto-selects the kernel version to build based on the kernel version we're currently running. That's quite lazy and means that once we're running our custom version, we won't automatically build new versions even if we run the script again. Soon, I'll update this to always build the latest release tag from Microsoft's WSL kernel repo.
+* The script currently pulls the latest HEAD from the OpenZFS repo. That's been working fine for me so far, but it's probably a good idea to update this to use the latest actual release tag.

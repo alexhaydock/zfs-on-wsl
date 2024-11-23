@@ -77,6 +77,7 @@ echo "CONFIG_USB_STORAGE=y" >> "$KERNELDIR/$KCONFIG_CONFIG"
 test -d $ZFSDIR/.git || git clone --depth 1 https://github.com/zfsonlinux/zfs.git $ZFSDIR
 (
 cd $ZFSDIR || exit
+git pull
 sh autogen.sh
 ./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=$KERNELDIR --with-linux-obj=$KERNELDIR
 ./copy-builtin $KERNELDIR
