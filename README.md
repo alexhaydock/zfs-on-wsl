@@ -1,5 +1,7 @@
 # ZFS-on-WSL 🐧🪟
 
+**Note:** _There is a slightly more detailed version of this README available [as a blog post on my site now](https://blog.infected.systems/posts/2024-11-24-zfs-on-wsl/)_.
+
 ZFS? In my WSL? ... It's more likely than you think.
 
 This is a set of scripts and methods intended to allow the use of ZFS on WSL2 by building a custom kernel along with the relevant userspace utilities.
@@ -14,7 +16,7 @@ By default, Ubuntu (the flagship WSL distro) ships the ZFS utilities inside the 
 
 On most distributions, this is solved by building the ZFS code as a loadable kernel module which can be inserted into the kernel at runtime. Some distributions automate this with DKMS and some - like Ubuntu or Alpine - build the ZFS modules themselves to be installed and loaded by a package.
 
-Unfortunately, WSL uses a monolithic kernel design. From what I can see, there's no way of dynamically inserting loadable kernel modules into a WSL2 kernel. So we need to build our own kernel, with the ZFS modules statically compiled in.
+Unfortunately, WSL defaults to using a monolithic kernel built by Microsoft without loadable modules from what I can tell. So our best option is to build our own kernel, with the ZFS modules statically compiled in.
 
 This repo is a quick and nasty script that automates:
 * Pulling Microsoft's latest WSL2 kernel code from their upstream
@@ -53,7 +55,7 @@ swap=0
 Start up WSL again by opening a new WSL session and check that our custom kernel is being used:
 ```
 $ uname -a
-Linux L702X 5.13.9-penguins-rule #1 SMP Mon Aug 9 14:53:39 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
+Linux PrecisionT1700 5.15.167.4-microsoft-standard-WSL2-penguins-rule #4 SMP Sat Nov 23 19:15:47 GMT 2024 x86_64 x86_64 x86_64 GNU/Linux
 ```
 
 ### Passing through drives (native)
@@ -84,12 +86,12 @@ usbipd list
 
 Bind the device you want to use with `usbipd`, based on the bus ID shown in the list:
 ```powershell
-usbipd bind --busid 4-4
+usbipd bind --busid 7-2
 ```
 
 Attach the bound device to the WSL2 VM:
 ```
-usbipd attach --wsl --busid <busid>
+usbipd attach --wsl --busid 7-2
 ```
 
 ### Interacting with mounted drives
