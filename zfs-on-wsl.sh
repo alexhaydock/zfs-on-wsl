@@ -21,6 +21,7 @@ sudo apt-get install -y \
   build-essential \
   curl \
   dkms \
+  dwarves \
   fakeroot \
   flex \
   gawk \
