@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$(id -u)" -e 0 ]; then echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1; fi
+if [ "$(id -u)" -eq 0 ]; then echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1; fi
 
 KERNELSUFFIX="with-zfs"
 KERNELDIR="/opt/zfs-on-wsl-kernel"
