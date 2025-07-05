@@ -1,11 +1,10 @@
 #!/usr/bin/env sh
-set -xeu
+set -euo pipefail
 
-KERNELNAME="penguins-rule"
+KERNELSUFFIX="with-zfs"
 KERNELDIR="/opt/zfs-on-wsl-kernel"
 ZFSDIR="/opt/zfs-on-wsl-zfs"
 
-# Install deps
 # Install pre-requisites
 export DEBIAN_FRONTEND=noninteractive
 sudo apt-get update && \
@@ -51,10 +50,11 @@ sudo mkdir -p $KERNELDIR $ZFSDIR
 sudo chown -R $USER:$USER $KERNELDIR $ZFSDIR
 
 # Clone Microsoft kernel source or update it and reset it if it already exists
-test -d $KERNELDIR/.git || git clone --branch linux-msft-wsl-"$(uname -r | cut -d- -f 1)" --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
+UPSTREAMKERNELVER=$(curl -s https://api.github.com/repos/microsoft/WSL2-Linux-Kernel/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+test -d $KERNELDIR/.git || git clone --branch $UPSTREAMKERNELVER --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
 
-# Enter kernel source dir and update it
-(cd $KERNELDIR && git reset --hard && git pull)
+# Enter kernel source dir, reset it in case we have any half-finished builds, and update it
+(cd $KERNELDIR && git reset --hard && git checkout $UPSTREAMKERNELVER && git pull)
 
 # Update existing kernel config with any custom config options we want
 #
@@ -68,17 +68,22 @@ echo "CONFIG_USB_STORAGE=y" >> "$KERNELDIR/$KCONFIG_CONFIG"
 # by enabling USB_STORAGE
 (cd $KERNELDIR && make olddefconfig && make prepare scripts)
 
-# Clone ZFS, configure it and build/install the userspace binaries
+# Clone ZFS
+UPSTREAMZFSVER=$(curl -s https://api.github.com/repos/openzfs/zfs/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
+test -d $ZFSDIR/.git || git clone --branch $UPSTREAMZFSVER --depth 1 https://github.com/zfsonlinux/zfs.git $ZFSDIR
+
+# Enter ZFS source dir, reset it in case we have any half-finished builds, and update it
+(cd $ZFSDIR && git reset --hard && git checkout $UPSTREAMZFSVER && git pull)
+
+# Configure ZFS and build/install the userspace binaries
 #
 # We could do this with the `native-deb` target added in OpenZFS 2.2, but that uses pre-configured
 # paths for Debian and Ubuntu and the documentation does not recommend overriding it to use a kernel
 # installed in a non-default location. TODO: I will see if I can sort this later.
 #
 # See: https://openzfs.github.io/openzfs-docs/Developer%20Resources/Building%20ZFS.html
-test -d $ZFSDIR/.git || git clone --depth 1 https://github.com/zfsonlinux/zfs.git $ZFSDIR
 (
 cd $ZFSDIR || exit
-git pull
 sh autogen.sh
 ./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=$KERNELDIR --with-linux-obj=$KERNELDIR
 ./copy-builtin $KERNELDIR
@@ -88,7 +93,7 @@ sudo make install
 
 # Enable statically compiling in ZFS, and build kernel
 echo "CONFIG_ZFS=y" >> "$KERNELDIR/$KCONFIG_CONFIG"
-(cd $KERNELDIR && make -j "$(nproc)" LOCALVERSION="-$KERNELNAME")
+(cd $KERNELDIR && make -j "$(nproc)" LOCALVERSION="-$KERNELSUFFIX")
 
 # Copy our kernel to C:\ZFSonWSL\bzImage
 # (We don't save it as bzImage in case we overwrite the kernel we're actually running

@@ -27,9 +27,12 @@ This repo is a quick and nasty script that automates:
 * Putting the kernel somewhere sensible on disk, for us to add it to our `.wslconfig`
 
 ### Build instructions
-Download this script into an Ubuntu instance running on WSL 2.
+Download this script into an Ubuntu instance running on WSL 2:
+```sh
+wget https://github.com/alexhaydock/zfs-on-wsl/raw/refs/heads/main/zfs-on-wsl.sh
+```
 
-Execute with:
+Now execute the script (without `sudo` privileges):
 ```sh
 ./zfs-on-wsl.sh
 ```
@@ -131,5 +134,3 @@ zfs list
 
 ### Known issues
 * For some reason, I can't build a ZFS pool out of sparse files. This is covered in [issue #1 in this repo](https://github.com/alexhaydock/zfs-on-wsl/issues/1). I'm not sure why this doesn't work. If you're looking to simply test whether ZFS is working after running this script, I recommend finding a USB drive you don't care much about and using the USB Mass Storage method above to do some testing.
-* At the moment, the script auto-selects the kernel version to build based on the kernel version we're currently running. That's quite lazy and means that once we're running our custom version, we won't automatically build new versions even if we run the script again. Soon, I'll update this to always build the latest release tag from Microsoft's WSL kernel repo.
-* The script currently pulls the latest HEAD from the OpenZFS repo. That's been working fine for me so far, but it's probably a good idea to update this to use the latest actual release tag.
