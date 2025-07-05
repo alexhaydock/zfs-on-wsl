@@ -34,6 +34,20 @@ Execute with:
 ./zfs-on-wsl.sh
 ```
 
+### Note for users on lower-memory (<16 GB) systems
+If you are running on a system with under 16GB RAM, Windows may not allocate enough RAM to the WSL2 VM to complete a kernel build.
+
+You can find out how much RAM your WSL2 environment has by running the following command inside a WSL2 terminal:
+```sh
+free -mh
+```
+
+To resolve this, you can add a line to the `.wslconfig` file in your home directory to give the build environment more RAM:
+```ini
+[wsl2]
+memory=6GB
+```
+
 ### Kernel installation instructions
 By default, the script in this repo will write our new kernel to `C:\ZFSonWSL\bzImage-new`.
 

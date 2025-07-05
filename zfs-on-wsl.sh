@@ -48,7 +48,7 @@ sudo apt-get purge -y zfsutils-linux
 
 # Create kernel directory
 sudo mkdir -p $KERNELDIR $ZFSDIR
-sudo chown -R user:user $KERNELDIR $ZFSDIR
+sudo chown -R $USER:$USER $KERNELDIR $ZFSDIR
 
 # Clone Microsoft kernel source or update it and reset it if it already exists
 test -d $KERNELDIR/.git || git clone --branch linux-msft-wsl-"$(uname -r | cut -d- -f 1)" --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
