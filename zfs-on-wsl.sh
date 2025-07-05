@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [ "$(id -u)" -e 0 ]; then echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1; fi
+
 KERNELSUFFIX="with-zfs"
 KERNELDIR="/opt/zfs-on-wsl-kernel"
 ZFSDIR="/opt/zfs-on-wsl-zfs"
@@ -49,7 +51,7 @@ sudo apt-get purge -y zfsutils-linux
 sudo mkdir -p $KERNELDIR $ZFSDIR
 sudo chown -R $USER:$USER $KERNELDIR $ZFSDIR
 
-# Clone Microsoft kernel source or update it and reset it if it already exists
+# Clone Microsoft kernel source
 UPSTREAMKERNELVER=$(curl -s https://api.github.com/repos/microsoft/WSL2-Linux-Kernel/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
 test -d $KERNELDIR/.git || git clone --branch $UPSTREAMKERNELVER --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
 
