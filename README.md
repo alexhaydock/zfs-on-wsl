@@ -32,6 +32,11 @@ Download this script into an Ubuntu instance running on WSL 2:
 wget https://github.com/alexhaydock/zfs-on-wsl/raw/refs/heads/main/zfs-on-wsl.sh
 ```
 
+Make the script executable:
+```sh
+chmod +x zfs-on-wsl.sh
+```
+
 Now execute the script (without `sudo` privileges):
 ```sh
 ./zfs-on-wsl.sh
