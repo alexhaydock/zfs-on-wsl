@@ -36,6 +36,7 @@ ${SUDO} apt-get install -y \
   fakeroot \
   flex \
   gawk \
+  git \
   libaio-dev \
   libattr1-dev \
   libblkid-dev \
