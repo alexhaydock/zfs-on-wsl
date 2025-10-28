@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$GITHUB_ACTIONS" = "true" ]; then
-  echo "Running inside GitHub Actions runner. Allowing root build."
+# Exit if we're running as root, unless this is a GitHub Actions runner
+if [ "${GITHUB_ACTIONS:-false}" = "true" ]; then
+  echo -e "Running inside GitHub Actions runner.\nAllowing rootful build.\n"
   SUDO=""
+  USER="root"
 else
   if [ "$(id -u)" -eq 0 ]; then
-    echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1
+    echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed.\n" >&2; exit 1
   fi
   SUDO="sudo"
 fi
