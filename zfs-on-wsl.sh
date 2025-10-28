@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ "$(id -u)" -eq 0 ]; then echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1; fi
+if [ "$GITHUB_ACTIONS" = "true" ]; then
+  echo "Running inside GitHub Actions runner. Allowing root build."
+  SUDO=""
+else
+  if [ "$(id -u)" -eq 0 ]; then
+    echo -e "Please do not run this script as root.\nThis script uses sudo to elevate only where needed." >&2; exit 1
+  fi
+  SUDO="sudo"
+fi
 
 KERNELSUFFIX="with-zfs"
 KERNELDIR="/opt/zfs-on-wsl-kernel"
@@ -9,10 +17,10 @@ ZFSDIR="/opt/zfs-on-wsl-zfs"
 
 # Install pre-requisites
 export DEBIAN_FRONTEND=noninteractive
-sudo apt-get update && \
-sudo apt-get --autoremove upgrade -y && \
-sudo apt-get install -y tzdata && \
-sudo apt-get install -y \
+${SUDO} apt-get update && \
+${SUDO} apt-get --autoremove upgrade -y && \
+${SUDO} apt-get install -y tzdata && \
+${SUDO} apt-get install -y \
   alien \
   autoconf \
   automake \
@@ -45,11 +53,11 @@ sudo apt-get install -y \
 
 # Remove the Ubuntu-provided ZFS utilities if we have them
 # (our build process will build them later)
-sudo apt-get purge -y zfsutils-linux
+${SUDO} apt-get purge -y zfsutils-linux
 
 # Create kernel directory
-sudo mkdir -p $KERNELDIR $ZFSDIR
-sudo chown -R $USER:$USER $KERNELDIR $ZFSDIR
+${SUDO} mkdir -p $KERNELDIR $ZFSDIR
+${SUDO} chown -R $USER:$USER $KERNELDIR $ZFSDIR
 
 # Clone Microsoft kernel source
 UPSTREAMKERNELVER=$(curl -s https://api.github.com/repos/microsoft/WSL2-Linux-Kernel/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
@@ -90,7 +98,7 @@ sh autogen.sh
 ./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=$KERNELDIR --with-linux-obj=$KERNELDIR
 ./copy-builtin $KERNELDIR
 make -j "$(nproc)"
-sudo make install
+${SUDO} make install
 )
 
 # Enable statically compiling in ZFS, and build kernel
