@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ubuntu:24.04
-
     steps:
+      - uses: actions/checkout@v3
       - name: Run zfs-on-wsl buildscript
         run: bash ./zfs-on-wsl.sh
