@@ -3,8 +3,6 @@ name: Build zfs-on-wsl using an Ubuntu LTS container
 # Run on any branch
 on:
   push:
-    branches:
-      - '*'
 
 jobs:
   run-script:
@@ -14,4 +12,4 @@ jobs:
 
     steps:
       - name: Run zfs-on-wsl buildscript
-        run: ./zfs-on-wsl.sh
+        run: bash ./zfs-on-wsl.sh
