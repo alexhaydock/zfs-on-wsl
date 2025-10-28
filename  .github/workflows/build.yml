@@ -1,10 +1,8 @@
 name: Build zfs-on-wsl using an Ubuntu LTS container
 
+# Run on any branch
 on:
   push:
-    branches:
-      - main
-  workflow_dispatch:
 
 jobs:
   run-script:
