@@ -1,8 +1,11 @@
 name: Build zfs-on-wsl using an Ubuntu LTS container
 
-# Run on any branch
 on:
+  # Run on pushes to any branch
   push:
+  # Run every Sunday at 07:15
+  schedule:
+    - cron: '15 7 * * 0'
 
 jobs:
   run-script:
