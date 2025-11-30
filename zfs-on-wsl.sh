@@ -174,7 +174,7 @@ make -j "$(nproc)"
 cd $KERNELDIR
 make -j "$(nproc)" modules
 echo 'Enter sudo password to install kernel modules...'
-sudo make modules_install
+${SUDO} make modules_install
 )
 
 # Copy our kernel to C:\ZFSonWSL\bzImage
