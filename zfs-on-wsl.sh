@@ -13,7 +13,7 @@ else
   SUDO="sudo"
 fi
 
-KERNELSUFFIX="with-zfs"
+KERNELSUFFIX="-with-zfs"
 KERNELDIR="/opt/zfs-on-wsl-kernel"
 ZFSDIR="/opt/zfs-on-wsl-zfs"
 
@@ -60,33 +60,81 @@ ${SUDO} apt-get purge -y zfsutils-linux
 
 # Create kernel directory
 ${SUDO} mkdir -p $KERNELDIR $ZFSDIR
-${SUDO} chown -R $USER:$USER $KERNELDIR $ZFSDIR
+${SUDO} chown -R "${USER}":"${USER}" $KERNELDIR $ZFSDIR
 
 # Clone Microsoft kernel source
 UPSTREAMKERNELVER=$(curl -s https://api.github.com/repos/microsoft/WSL2-Linux-Kernel/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-test -d $KERNELDIR/.git || git clone --branch $UPSTREAMKERNELVER --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
+test -d $KERNELDIR/.git || git clone --branch "$UPSTREAMKERNELVER" --single-branch --depth 1 https://github.com/microsoft/WSL2-Linux-Kernel.git $KERNELDIR
 
 # Enter kernel source dir, reset it in case we have any half-finished builds, and update it
-(cd $KERNELDIR && git reset --hard && git checkout $UPSTREAMKERNELVER && git pull)
+(cd $KERNELDIR && git reset --hard && git checkout "$UPSTREAMKERNELVER" && git pull)
 
 # Update existing kernel config with any custom config options we want
-#
+export KCONFIG_CONFIG="Microsoft/config-wsl"
+(
+cd $KERNELDIR
+
+# Run make olddefconfig to ensure config is up to date
+make olddefconfig
+
+# Create a blank ZFS config overlay
+echo ''  > zfs.config
+
 # Here, we enable CONFIG_USB_STORAGE to enable USB Mass Storage support,
 # which does not appear to be enabled by default in Microsoft's kernel config
 # but is needed for passing through USB devices to use for ZFS
-export KCONFIG_CONFIG="Microsoft/config-wsl"
-echo "CONFIG_USB_STORAGE=y" >> "$KERNELDIR/$KCONFIG_CONFIG"
+#
+# Also update the kernel name to add our suffix
+{
+echo "CONFIG_USB_STORAGE=y"
+echo "CONFIG_LOCALVERSION=${KERNELSUFFIX}"
+} >> zfs.config
+
+# Statically build any config options we need for Docker to work
+# We get this by running the following inside WSL *using a default kernel*:
+#   wget https://raw.githubusercontent.com/moby/moby/refs/heads/master/contrib/check-config.sh
+#   ./check-config.sh | sed '/Optional/q' | grep "(as module)" | awk '{print $2}' | cut -d':' -f1 | awk '{print $1"=y"}'
+cat << 'EOF' >> zfs.config
+CONFIG_BRIDGE=y
+CONFIG_BRIDGE_NETFILTER=y
+CONFIG_IP_NF_FILTER=y
+CONFIG_IP_NF_MANGLE=y
+CONFIG_IP_NF_TARGET_MASQUERADE=y
+CONFIG_IP6_NF_FILTER=y
+CONFIG_IP6_NF_MANGLE=y
+CONFIG_IP6_NF_TARGET_MASQUERADE=y
+CONFIG_NETFILTER_XT_MATCH_ADDRTYPE=y
+CONFIG_NETFILTER_XT_MATCH_CONNTRACK=y
+CONFIG_NETFILTER_XT_MATCH_IPVS=y
+CONFIG_NETFILTER_XT_MARK=y
+CONFIG_IP_NF_RAW=y
+CONFIG_IP_NF_NAT=y
+CONFIG_IP6_NF_RAW=y
+CONFIG_IP6_NF_NAT=y
+EOF
+
+# Merge the zfs.config overlay with our current .config file
+echo "Applying ZFS config with the following options..."
+cat zfs.config
+echo ""
+scripts/kconfig/merge_config.sh "$KERNELDIR/$KCONFIG_CONFIG" zfs.config
 
 # Prep kernel and use the defaults for any new config options we just unlocked
-# by enabling USB_STORAGE
-(cd $KERNELDIR && make olddefconfig && make prepare scripts)
+make olddefconfig
+make prepare
+)
 
 # Clone ZFS
 UPSTREAMZFSVER=$(curl -s https://api.github.com/repos/openzfs/zfs/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-test -d $ZFSDIR/.git || git clone --branch $UPSTREAMZFSVER --depth 1 https://github.com/zfsonlinux/zfs.git $ZFSDIR
+test -d $ZFSDIR/.git || git clone --branch "$UPSTREAMZFSVER" --depth 1 https://github.com/zfsonlinux/zfs.git $ZFSDIR
 
 # Enter ZFS source dir, reset it in case we have any half-finished builds, and update it
-(cd $ZFSDIR && git reset --hard && git checkout $UPSTREAMZFSVER && git pull)
+(
+cd $ZFSDIR
+git reset --hard
+git checkout "$UPSTREAMZFSVER"
+git pull
+)
 
 # Configure ZFS and build/install the userspace binaries
 #
@@ -98,15 +146,36 @@ test -d $ZFSDIR/.git || git clone --branch $UPSTREAMZFSVER --depth 1 https://git
 (
 cd $ZFSDIR || exit
 sh autogen.sh
-./configure --prefix=/ --libdir=/lib --includedir=/usr/include --datarootdir=/usr/share --enable-linux-builtin=yes --with-linux=$KERNELDIR --with-linux-obj=$KERNELDIR
+./configure \
+  --prefix=/ \
+  --libdir=/lib \
+  --includedir=/usr/include \
+  --datarootdir=/usr/share \
+  --enable-linux-builtin=yes \
+  --with-linux=$KERNELDIR \
+  --with-linux-obj=$KERNELDIR
 ./copy-builtin $KERNELDIR
 make -j "$(nproc)"
 ${SUDO} make install
 )
 
-# Enable statically compiling in ZFS, and build kernel
+(
+cd $KERNELDIR
+
+# Enable statically compiling in ZFS
 echo "CONFIG_ZFS=y" >> "$KERNELDIR/$KCONFIG_CONFIG"
-(cd $KERNELDIR && make -j "$(nproc)" LOCALVERSION="-$KERNELSUFFIX")
+
+# Build kernel
+make -j "$(nproc)"
+)
+
+# Install modules
+(
+cd $KERNELDIR
+make -j "$(nproc)" modules
+echo 'Enter sudo password to install kernel modules...'
+sudo make modules_install
+)
 
 # Copy our kernel to C:\ZFSonWSL\bzImage
 # (We don't save it as bzImage in case we overwrite the kernel we're actually running
